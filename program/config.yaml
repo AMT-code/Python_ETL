@@ -1,0 +1,9 @@
+input_file: inputs\data_100k.csv
+input_file_config:
+  delimiter: ','
+  type: csv
+output_file: outputs\res_100k.csv
+output_file_config:
+  format: CSV
+  type: .csv
+tables_path: tables

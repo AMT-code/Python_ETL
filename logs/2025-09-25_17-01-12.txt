@@ -1,0 +1,28 @@
+[17:01:12] | [INFO] | Pipeline | === PIPELINE BEGINNING ===
+[17:01:12] | [SUCCESS] | Pipeline | Setting input file location: inputs\insurance_data_1500k.csv
+[17:01:12] | [INFO] | Pipeline | Input file type: csv
+[17:01:12] | [INFO] | Pipeline | Input file delimiter: ","
+[17:01:12] | [SUCCESS] | Pipeline | Setting tables location: tables
+[17:01:12] | [SUCCESS] | Pipeline | Setting output file location: outputs\res_1500k.csv
+[17:01:14] | [SUCCESS] | Pipeline | 1500000 lines read
+[17:01:14] | [INFO] | Pipeline | File read as CSV with delimiter: ","
+[17:01:14] | [INFO] | Engine | Beginning of transformations
+[17:01:14] | [DEBUG] | Functions | input data head lines=>    ID tipo_producto  temp_idx  ... annual_prem prem_frecuency comission_precentage
+0   1     Vitalicio       NaN  ...    42585.51        Mensual                 20.7
+1   2      Temporal       5.0  ...     9724.08        Mensual                 23.0
+
+[2 rows x 13 columns] 
+[17:01:14] | [SUCCESS] | Functions | SEX mapped
+[17:01:14] | [SUCCESS] | Functions | POL_TERM_Y correctly assigned
+[17:01:14] | [SUCCESS] | Functions | PROD_TYPE column correctly assigned
+[17:01:21] | [SUCCESS] | Functions | date conversions correctly done
+[17:01:21] | [SUCCESS] | Functions | SUM_ASSURED column correctly assigned
+[17:01:21] | [SUCCESS] | Functions | ANNUAL_PREM column correctly assigned
+[17:01:21] | [SUCCESS] | Functions | TARIFF column correctly assigned
+[17:01:21] | [SUCCESS] | Functions | CURRENCY column correctly assigned
+[17:01:21] | [SUCCESS] | Functions | PREM_FREQ column correctly assigned
+[17:01:21] | [INFO] | Functions | Output variable list: ID, PROD_TYPE, SEX, POL_TERM_Y, ENTRY_YEAR, ENTRY_MTH, AGE_AT_ENTRY, TARIFF, CURRENCY, SUM_ASSURED, ANNUAL_PREM, PREM_FREQ, REINS, COMM_PC
+[17:01:22] | [INFO] | Engine | End of transformations
+[17:01:28] | [SUCCESS] | Pipeline | res_1500k.csv file successfully saved
+[17:01:28] | [INFO] | Pipeline | Pipeline runtime: 16.26 seconds
+[17:01:28] | [INFO] | Pipeline | === PIPELINE ENDING ===

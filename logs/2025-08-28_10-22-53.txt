@@ -1,0 +1,27 @@
+[10:22:53] | [INFO] | Pipeline | === PIPELINE BEGINNING ===
+[10:22:53] | [SUCCESS] | Pipeline | Setting input file location: inputs\input_,.csv
+[10:22:53] | [INFO] | Pipeline | Input file type: csv
+[10:22:53] | [INFO] | Pipeline | Input file delimiter: ","
+[10:22:53] | [SUCCESS] | Pipeline | Setting tables location: tables
+[10:22:53] | [SUCCESS] | Pipeline | Setting output file location: outputs\res.csv
+[10:22:53] | [SUCCESS] | Pipeline | 10000 lines read
+[10:22:53] | [INFO] | Pipeline | File read as CSV with delimiter: ","
+[10:22:53] | [INFO] | Engine | Beginning of transformations
+[10:22:53] | [DEBUG] | Functions | input data head lines=>    ID tipo_producto  temp_idx  ... annual_prem prem_frecuency comission_precentage
+0   1     Vitalicio       NaN  ...    14757.66        Mensual                 21.2
+1   2      Temporal       5.0  ...     8191.75     Trimestral                 14.4
+
+[2 rows x 13 columns] 
+[10:22:53] | [SUCCESS] | Functions | SEX mapped
+[10:22:53] | [SUCCESS] | Functions | POL_TERM_Y correctly assigned
+[10:22:53] | [SUCCESS] | Functions | PROD_TYPE column correctly assigned
+[10:22:53] | [SUCCESS] | Functions | date conversions correctly done
+[10:22:53] | [SUCCESS] | Functions | SUM_ASSURED column correctly assigned
+[10:22:53] | [SUCCESS] | Functions | ANNUAL_PREM column correctly assigned
+[10:22:53] | [SUCCESS] | Functions | TARIFF column correctly assigned
+[10:22:53] | [SUCCESS] | Functions | CURRENCY column correctly assigned
+[10:22:53] | [SUCCESS] | Functions | PREM_FREQ column correctly assigned
+[10:22:53] | [INFO] | Functions | Output variable list: ID, PROD_TYPE, SEX, POL_TERM_Y, ENTRY_YEAR, ENTRY_MTH, AGE_AT_ENTRY, TARIFF, CURRENCY, SUM_ASSURED, ANNUAL_PREM, PREM_FREQ, REINS, COMM_PC
+[10:22:53] | [INFO] | Engine | End of transformations
+[10:22:53] | [SUCCESS] | Pipeline | res.csv file successfully saved
+[10:22:53] | [INFO] | Pipeline | === PIPELINE ENDING ===

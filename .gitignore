@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Entorno virtual
+env/
+venv/
+.venv/
+
+# Logs y temporales
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Archivos de entrada grandes
+inputs/*.csv
+inputs/*.xlsx
+
+# Outputs
+outputs/
+
+# Dependencias y cache
+*.egg-info/
+.eggs/
+dist/
+build/
+pip-wheel-metadata/
