@@ -11,6 +11,7 @@ venv/
 .venv/
 
 # Logs y temporales
+logs/*.txt
 *.log
 *.tmp
 *.bak
