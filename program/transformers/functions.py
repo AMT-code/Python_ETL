@@ -13,7 +13,7 @@ def run_business_rules(df, tables_path, logger):
     # --> debugger <--
     # logger.debug(f"input data types:\n {df.info()} ")
     # logger.debug(f"input data head lines=> {df.head(2)} ")
-    logger.debug(f"input data columns=> {df.columns.tolist()} ")
+    logger.debug(f"input data columns -> {df.columns.tolist()} ")
 
     # mapear sexo
     df["Sex"] = df["Sex"].map({"Female": 0, "Male": 1})

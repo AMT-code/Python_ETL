@@ -2,22 +2,23 @@ import flet as ft
 import os
 import yaml
 import subprocess
+import threading
+import re
 
 def run_pipeline(self):
-
-    """Ejecutar el pipeline desde Flet"""
+    """Ejecutar el pipeline desde Flet con UI bloqueada y logs en tiempo real"""
     input_config = self.state.get('validated_input', {})
     output_config = self.state.get('validated_output', {})
     tables_path = self.state.get('validated_tables_path', '')
 
     if not input_config:
-        self.toast.error("❌ Please validate the input file first in the Input Parameters tab")
+        self.toast.error("⛔ Please validate the input file first in the Input Parameters tab")
         return
     if not output_config:
-        self.toast.error("❌ Please configure the output file first in the Output Parameters tab")
+        self.toast.error("⛔ Please configure the output file first in the Output Parameters tab")
         return
     if not tables_path:
-        self.toast.error("❌ Please validate the tables directory first in the Tables Parameters tab")
+        self.toast.error("⛔ Please validate the tables directory first in the Tables Parameters tab")
         return
 
     # Crear el config.yaml con los parámetros de la UI
@@ -31,7 +32,7 @@ def run_pipeline(self):
         },
         "output_file_config": {
             "type": output_config.get("file_type"),
-            "format": output_config.get("file_type").replace(".", "").upper()  # CSV o RPT
+            "format": output_config.get("file_type").replace(".", "").upper()
         }
     }
 
@@ -39,45 +40,130 @@ def run_pipeline(self):
     config_path = os.path.join(current_dir, "..", "..", "program", "config.yaml")
     program_dir = os.path.join(current_dir, "..", "..", "program")
 
-    try:
-        # Escribir configuración YAML
-        with open(config_path, 'w') as f:
-            yaml.dump(config_data, f, default_flow_style=False)
-        self.toast.success("✅ Configuration file updated!")
-        self.toast.info(f"📁 Config saved to: {config_path}")
+    # Variable para controlar cancelación
+    cancel_requested = [False]  # Usamos lista para poder modificarla en nested function
+    process_ref = [None]  # Referencia al proceso para poder terminarlo
 
-        # Ejecutar pipeline.py como proceso externo
-        self.toast.info("🚀 Starting pipeline execution...")
-        process = subprocess.Popen(
-            ["python", "pipeline.py"],
-            cwd=program_dir,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            universal_newlines=True
-        )
+    def cancel_pipeline():
+        """Callback para cancelar el pipeline"""
+        cancel_requested[0] = True
+        if process_ref[0]:
+            try:
+                process_ref[0].terminate()
+                self.loading.add_log("Pipeline cancellation requested...", "WARNING")
+            except:
+                pass
 
-        # Leer output en tiempo real (solo muestra en consola por ahora)
-        output_lines = []
-        while True:
-            output = process.stdout.readline()
-            if output == '' and process.poll() is not None:
-                break
-            if output:
-                output_lines.append(output.strip())
-                print(output.strip())  # Puedes mostrar en un área de log en la UI si lo deseas
+    # Mostrar overlay de carga con opción de cancelar
+    self.loading.show(
+        "⚙️ Running Pipeline...", 
+        allow_cancel=True, 
+        cancel_callback=cancel_pipeline
+    )
+    
+    # Deshabilitar el botón de ejecución
+    self.run_button.current.disabled = True
+    self.page.update()
 
-        return_code = process.poll()
-        if return_code == 0:
-            self.toast.success("🎉 Pipeline completed successfully!")
-        else:
-            stderr_output = process.stderr.read()
-            self.toast.error(f"❌ Pipeline failed with return code: {return_code}")
-            if stderr_output:
-                self.toast.error(f"Error details:\n{stderr_output}")
+    def parse_log_level(line):
+        """Extraer nivel de log de una línea"""
+        if "[ERROR]" in line or "[CRITICAL]" in line:
+            return "ERROR"
+        elif "[WARNING]" in line:
+            return "WARNING"
+        elif "[SUCCESS]" in line:
+            return "SUCCESS"
+        elif "[DEBUG]" in line:
+            return "DEBUG"
+        elif "[INFO]" in line:
+            return "INFO"
+        return "INFO"
 
-    except Exception as ex:
-        self.toast.error(f"❌ Error running pipeline: {str(ex)}")
-        self.toast.error(f"📁 Attempted config path: {config_path}")
-        self.toast.error(f"📁 Attempted program dir: {program_dir}")
-        print(ex)
+    def clean_log_line(line):
+        """Limpiar línea de log para mostrar solo el mensaje importante"""
+        # Remover timestamp y módulo si existen: [HH:MM:SS] | [LEVEL] | Module |
+        cleaned = re.sub(r'\[\d{2}:\d{2}:\d{2}\]\s*\|\s*\[[^\]]+\]\s*\|\s*[^\|]+\|\s*', '', line)
+        return cleaned.strip() if cleaned else line
+
+    def execute_pipeline():
+        """Función que se ejecuta en thread separado"""
+        try:
+            # Escribir configuración YAML
+            with open(config_path, 'w') as f:
+                yaml.dump(config_data, f, default_flow_style=False)
+            
+            self.loading.add_log("Configuration file created", "SUCCESS")
+            self.loading.add_log("Starting pipeline execution...", "INFO")
+            
+            # Ejecutar pipeline.py como proceso externo
+            process = subprocess.Popen(
+                ["python", "pipeline.py"],
+                cwd=program_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                universal_newlines=True,
+                bufsize=1  # Line buffered
+            )
+            
+            process_ref[0] = process  # Guardar referencia para cancelación
+
+            # Leer output en tiempo real
+            output_lines = []
+            while True:
+                # Verificar si se solicitó cancelación
+                if cancel_requested[0]:
+                    self.loading.add_log("=" * 50, "WARNING")
+                    self.loading.add_log("PIPELINE CANCELED BY USER", "ERROR")
+                    self.loading.add_log("Terminating pipeline process...", "WARNING")
+                    self.loading.add_log("=" * 50, "WARNING")
+                    process.terminate()
+                    try:
+                        process.wait(timeout=5)
+                        self.loading.add_log("Process terminated successfully", "SUCCESS")
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        self.loading.add_log("Process killed (force termination)", "WARNING")
+                    break
+                
+                output = process.stdout.readline()
+                if output == '' and process.poll() is not None:
+                    break
+                if output:
+                    line = output.strip()
+                    output_lines.append(line)
+                    print(line)  # Mantener en consola también
+                    
+                    # Agregar al overlay con nivel apropiado
+                    level = parse_log_level(line)
+                    cleaned_line = clean_log_line(line)
+                    self.loading.add_log(cleaned_line, level)
+
+            return_code = process.poll()
+            
+            # Ocultar overlay y mostrar resultado
+            self.loading.hide()
+            self.run_button.current.disabled = False
+            
+            if cancel_requested[0]:
+                self.toast.warning("⚠️ Pipeline execution was canceled")
+            elif return_code == 0:
+                self.toast.success("🎉 Pipeline completed successfully!")
+            else:
+                stderr_output = process.stderr.read()
+                self.toast.error(f"⛔ Pipeline failed with return code: {return_code}")
+                if stderr_output:
+                    print(f"Error details:\n{stderr_output}")
+            
+            self.page.update()
+
+        except Exception as ex:
+            # Asegurarse de ocultar overlay incluso si hay error
+            self.loading.hide()
+            self.run_button.current.disabled = False
+            self.toast.error(f"⛔ Error running pipeline: {str(ex)}")
+            print(f"Exception: {ex}")
+            self.page.update()
+
+    # Ejecutar en thread separado para no bloquear la UI de Flet
+    threading.Thread(target=execute_pipeline, daemon=True).start()

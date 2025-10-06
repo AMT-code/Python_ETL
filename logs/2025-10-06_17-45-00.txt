@@ -1,0 +1,13 @@
+[17:45:00] | [INFO] | Pipeline | === PIPELINE BEGINNING ===
+[17:45:00] | [SUCCESS] | Pipeline | Setting input file location: inputs\data_1000k.csv
+[17:45:00] | [INFO] | Pipeline | Input file type: csv
+[17:45:00] | [INFO] | Pipeline | Input file delimiter: ","
+[17:45:00] | [SUCCESS] | Pipeline | Setting tables location: tables
+[17:45:00] | [SUCCESS] | Pipeline | Setting output file location: outputs\res.csv
+[17:45:01] | [SUCCESS] | Pipeline | 1000000 lines read
+[17:45:01] | [INFO] | Pipeline | File read as CSV with delimiter: ","
+[17:45:01] | [INFO] | Engine | Beginning of transformations
+[17:45:01] | [DEBUG] | Functions | input data columns -> ['ID', 'tipo_producto', 'temp_idx', 'Sex', 'inception_date', 'birth_date', 'sum_insured', 'tariff_grp', 'country', 'reins_name', 'annual_prem', 'prem_frecuency', 'comission_precentage'] 
+[17:45:01] | [SUCCESS] | Functions | SEX mapped
+[17:45:01] | [SUCCESS] | Functions | POL_TERM_Y correctly assigned
+[17:45:02] | [SUCCESS] | Functions | PROD_TYPE column correctly assigned

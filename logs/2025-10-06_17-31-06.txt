@@ -1,0 +1,24 @@
+[17:31:06] | [INFO] | Pipeline | === PIPELINE BEGINNING ===
+[17:31:06] | [SUCCESS] | Pipeline | Setting input file location: inputs\data_2000k.csv
+[17:31:06] | [INFO] | Pipeline | Input file type: csv
+[17:31:06] | [INFO] | Pipeline | Input file delimiter: ","
+[17:31:06] | [SUCCESS] | Pipeline | Setting tables location: tables
+[17:31:06] | [SUCCESS] | Pipeline | Setting output file location: outputs\res_2000k.csv
+[17:31:09] | [SUCCESS] | Pipeline | 2000000 lines read
+[17:31:09] | [INFO] | Pipeline | File read as CSV with delimiter: ","
+[17:31:09] | [INFO] | Engine | Beginning of transformations
+[17:31:09] | [DEBUG] | Functions | input data columns -> ['ID', 'tipo_producto', 'temp_idx', 'Sex', 'inception_date', 'birth_date', 'sum_insured', 'tariff_grp', 'country', 'reins_name', 'annual_prem', 'prem_frecuency', 'comission_precentage'] 
+[17:31:09] | [SUCCESS] | Functions | SEX mapped
+[17:31:10] | [SUCCESS] | Functions | POL_TERM_Y correctly assigned
+[17:31:10] | [SUCCESS] | Functions | PROD_TYPE column correctly assigned
+[17:31:25] | [SUCCESS] | Functions | date conversions correctly done
+[17:31:25] | [SUCCESS] | Functions | SUM_ASSURED column correctly assigned
+[17:31:25] | [SUCCESS] | Functions | ANNUAL_PREM column correctly assigned
+[17:31:26] | [SUCCESS] | Functions | TARIFF column correctly assigned
+[17:31:27] | [SUCCESS] | Functions | CURRENCY column correctly assigned
+[17:31:27] | [SUCCESS] | Functions | PREM_FREQ column correctly assigned
+[17:31:27] | [INFO] | Functions | Output variable list: ID, PROD_TYPE, SEX, POL_TERM_Y, ENTRY_YEAR, ENTRY_MTH, AGE_AT_ENTRY, TARIFF, CURRENCY, SUM_ASSURED, ANNUAL_PREM, PREM_FREQ, REINS, COMM_PC
+[17:31:28] | [INFO] | Engine | End of transformations
+[17:31:44] | [SUCCESS] | Pipeline | res_2000k.csv file successfully saved
+[17:31:44] | [INFO] | Pipeline | Pipeline runtime: 37.66 seconds
+[17:31:44] | [INFO] | Pipeline | === PIPELINE ENDING ===

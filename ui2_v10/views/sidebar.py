@@ -6,10 +6,11 @@ from core.pipeline_runner import run_pipeline
 class SideBar:
     """Construir el sidebar con controles del pipeline y resumen de configuración"""
 
-    def __init__(self, page, state, toast):
+    def __init__(self, page, state, toast, loading):
         self.page = page
         self.state = state
         self.toast = toast
+        self.loading = loading
 
         # Referencias para SideBar
         self.run_button = ft.Ref[ft.ElevatedButton]()
@@ -33,12 +34,11 @@ class SideBar:
                 width=200,
                 height=50,
                 style=ft.ButtonStyle(
-                    # color=ft.Colors.WHITE,
                     bgcolor=ft.Colors.GREY,  # Inicialmente gris
                     shape=ft.RoundedRectangleBorder(radius=10)
                 ),
-                on_click=lambda _: run_pipeline(self),  # Pasar self para acceder a estado y toast
-                disabled=True,  # Inicialmente deshabilitado,
+                on_click=lambda _: run_pipeline(self),  # Pasar self completo
+                disabled=True,  # Inicialmente deshabilitado
                 ref=self.run_button
             ),
 
@@ -49,10 +49,10 @@ class SideBar:
             ft.Text("📋 Current Configuration", size=16, weight=ft.FontWeight.BOLD),
             
             ft.Container(
-                content=ft.Column([#],
-                    create_config_item("Input File", "❌ Not set"),
-                    create_config_item("Tables Path", "❌ Not set"),
-                    create_config_item("Output File", "❌ Not set"),
+                content=ft.Column([
+                    create_config_item("Input File", "⛔ Not set"),
+                    create_config_item("Tables Path", "⛔ Not set"),
+                    create_config_item("Output File", "⛔ Not set"),
                 ], 
                 ref=self.config_items),
                 padding=10,
@@ -67,9 +67,9 @@ class SideBar:
                 ref=self.log_container
             )               
         ], spacing=10)
-        self.update_sidebar()
 
     def update_sidebar(self):
+        """Actualizar estado del sidebar"""
         # Verificar si todos los parámetros están configurados
         input_ok = bool(self.state.get('validated_input', {}).get('path'))
         tables_ok = bool(self.state.get('validated_tables_path'))
@@ -84,9 +84,9 @@ class SideBar:
 
         # Actualizar resumen de configuración
         config_data = {
-            "Input File": self.state.get('validated_input', {}).get('path', "❌ Not set"),
-            "Tables Path": self.state.get('validated_tables_path') or "❌ Not set",
-            "Output File": self.state.get('validated_output', {}).get('path', "❌ Not set"),
+            "Input File": self.state.get('validated_input', {}).get('path', "⛔ Not set"),
+            "Tables Path": self.state.get('validated_tables_path') or "⛔ Not set",
+            "Output File": self.state.get('validated_output', {}).get('path', "⛔ Not set"),
         }
         self.config_items.current.controls = [
             create_config_item(key, value) for key, value in config_data.items()

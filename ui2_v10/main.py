@@ -1,6 +1,7 @@
 import flet as ft
 # ui aux
 from toast import SimpleToast
+from loading_overlay import LoadingOverlay
 from state import AppState
 # views aux
 from views.input_tab import InputTab
@@ -17,9 +18,10 @@ class ETLPipelineApp:
         self.page = page
         self.setup_page()
         self.init_state()
-        # Inicializar tabs y toast DESPUÉS de setup_page
+        # Inicializar toast y loading DESPUÉS de setup_page
         self.toast = SimpleToast(self.page)
-        self.sidebar = SideBar(page=self.page, state=self.state, toast=self.toast)
+        self.loading = LoadingOverlay(self.page)
+        self.sidebar = SideBar(page=self.page, state=self.state, toast=self.toast, loading=self.loading)
         self.input_tab = InputTab(page=self.page, state=self.state, toast=self.toast, update_sidebar=self.sidebar.update_sidebar)
         self.tables_tab = TablesTab(page=self.page, state=self.state, toast=self.toast, update_sidebar=self.sidebar.update_sidebar)
         self.outputs_tab = OutputsTab(page=self.page, state=self.state, toast=self.toast, update_sidebar=self.sidebar.update_sidebar)
@@ -153,4 +155,4 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.app(target=main) #Ese ft.app() arranca la aplicación Flet, instancia un Page y se lo pasa como argumento a main.
+    ft.app(target=main)

@@ -64,11 +64,11 @@ def create_data_preview(df: pd.DataFrame, file_path: str, file_type: str, max_ro
 
 def create_config_item(label: str, value: str):
     """Crear un item de configuración para el sidebar"""
-    icon = "✅" if "❌" not in value else "❌"
-    color = ft.Colors.GREEN_600 if "❌" not in value else ft.Colors.RED_600
+    icon = "✅" if "⛔" not in value else "⛔"
+    color = ft.Colors.GREEN_600 if "⛔" not in value else ft.Colors.RED_600
     
     return ft.Row([
         ft.Text(f"{label}:", weight=ft.FontWeight.BOLD, size=12),
-        ft.Text(f"{icon} {value.replace('❌ ', '').replace('✅ ', '')}", 
+        ft.Text(f"{icon} {value.replace('⛔ ', '').replace('✅ ', '')}",
                 color=color, size=12, expand=True)
     ], tight=True)
