@@ -1,9 +1,42 @@
 import flet as ft
 import os
+import sys
 import yaml
 import subprocess
 import threading
 import re
+from datetime import datetime
+
+# Configurar path para importar módulos del programa
+current_dir = os.path.dirname(os.path.abspath(__file__))
+program_dir = os.path.join(current_dir, "..", "..", "program")
+sys.path.insert(0, program_dir)
+
+def write_to_log_file(message, level="INFO"):
+    """Escribir directamente al archivo de log más reciente"""
+    try:
+        logs_dir = os.path.join(current_dir, "..", "..", "logs")
+        
+        # Buscar el archivo de log más reciente
+        if os.path.exists(logs_dir):
+            log_files = [f for f in os.listdir(logs_dir) if f.endswith('.txt')]
+            if log_files:
+                # Ordenar por fecha de modificación y obtener el más reciente
+                log_files.sort(key=lambda x: os.path.getmtime(os.path.join(logs_dir, x)), reverse=True)
+                latest_log = os.path.join(logs_dir, log_files[0])
+                
+                # Escribir en el archivo
+                timestamp = datetime.now().strftime("%H:%M:%S")
+                log_line = f"[{timestamp}] | [{level}] | UI | {message}\n"
+                
+                with open(latest_log, 'a', encoding='utf-8') as f:
+                    f.write(log_line)
+                
+                return True
+    except Exception as e:
+        print(f"Error writing to log file: {e}")
+    
+    return False
 
 def run_pipeline(self):
     """Ejecutar el pipeline desde Flet con UI bloqueada y logs en tiempo real"""
@@ -113,17 +146,27 @@ def run_pipeline(self):
             while True:
                 # Verificar si se solicitó cancelación
                 if cancel_requested[0]:
+                    # Registrar en el archivo de log oficial
+                    write_to_log_file("=" * 60, "WARNING")
+                    write_to_log_file("PIPELINE EXECUTION CANCELED BY USER", "ERROR")
+                    write_to_log_file("User requested termination via UI", "WARNING")
+                    write_to_log_file("=" * 60, "WARNING")
+                    
+                    # También mostrar en el overlay
                     self.loading.add_log("=" * 50, "WARNING")
                     self.loading.add_log("PIPELINE CANCELED BY USER", "ERROR")
                     self.loading.add_log("Terminating pipeline process...", "WARNING")
                     self.loading.add_log("=" * 50, "WARNING")
+                    
                     process.terminate()
                     try:
                         process.wait(timeout=5)
                         self.loading.add_log("Process terminated successfully", "SUCCESS")
+                        write_to_log_file("Pipeline process terminated successfully", "INFO")
                     except subprocess.TimeoutExpired:
                         process.kill()
                         self.loading.add_log("Process killed (force termination)", "WARNING")
+                        write_to_log_file("Pipeline process killed (force termination)", "WARNING")
                     break
                 
                 output = process.stdout.readline()
