@@ -1,8 +1,8 @@
-input_file: inputs\data_1000k.csv
+input_file: inputs\data_2000k.csv
 input_file_config:
   delimiter: ','
   type: csv
-output_file: outputs\res_1000k.csv
+output_file: outputs\res_2000k.csv
 output_file_config:
   format: CSV
   type: .csv

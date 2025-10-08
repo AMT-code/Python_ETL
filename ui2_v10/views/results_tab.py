@@ -49,7 +49,7 @@ class ResultsTab:
         
         self.main_container = ft.Container(
             content=ft.Column([
-                ft.Text("Pipeline results", size=24, weight=ft.FontWeight.BOLD),
+                ft.Text("Pipeline results (preview - 10 first rows)", size=24, weight=ft.FontWeight.BOLD),
                 ft.Divider(height=1, color=ft.Colors.GREY_300),
                 ft.Button(text="Refresh", icon=ft.Icons.REFRESH, on_click=lambda _: self.refresh_content()),
                 self.content_column

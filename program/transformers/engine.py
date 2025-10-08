@@ -1,7 +1,7 @@
 from .functions import *
 import os
 
-def apply_transformations(df, config, logger, script_dir):
+def apply_transformations(df, config, logger, script_dir, audit=None):
     # Guardar el prefix original
     original_prefix = logger.prefix
     # Cambiar al prefix específico del módulo
@@ -12,7 +12,7 @@ def apply_transformations(df, config, logger, script_dir):
     # Construir ruta relativa al script
     tables_path = os.path.join(script_dir, "..", config["tables_path"])
     
-    df = run_business_rules(df, tables_path, logger)
+    df = run_business_rules(df, tables_path, logger, audit)
 
     logger.info("End of transformations")
     

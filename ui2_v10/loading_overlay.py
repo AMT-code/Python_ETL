@@ -15,7 +15,7 @@ class LoadingOverlay:
         self.cancel_callback = None
         self.cancel_button = ft.ElevatedButton(
             "Cancel Pipeline",
-            icon=ft.Icons.CANCEL,
+            # icon=ft.Icons.CANCEL,
             on_click=self._on_cancel_click,
             style=ft.ButtonStyle(
                 bgcolor=ft.Colors.GREY_400,

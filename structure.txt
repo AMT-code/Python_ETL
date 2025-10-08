@@ -1,4 +1,4 @@
-# v13/
+# v15/
 ├── env/                         # entorno virtual
 ├── inputs/                      # archivos de entrada
 │   ├── input.csv
@@ -13,6 +13,7 @@
 │   ├── reader.py                # input handler
 │   ├── writer.py                # output writer 
 │   ├── logger.py                # logger básico
+│   ├── audit.py                # logger básico
 │   └── transformers/
 │       ├── engine.py           # lógica principal de transformaciones
 │       └── functions.py        # funciones auxiliares reutilizables
@@ -25,8 +26,9 @@
 │   ├── main.py            		 # Flet interface > SPLIT IN MODULES <
 |   ├── state.py                 # StateManager class simple
 |   ├── toast.py                 # SimpleToast (no necesita carpeta utils/)
+|   ├── loading_overlay.py       # Spinner de carga y bloqueo de intergaz, proceso Async, logs en tiempo real
 |   ├── core
-│       └── pipeline_runner.py   # run_pipeline()
+│   |   └── pipeline_runner.py   # run_pipeline()
 |   └── views/
 │       ├── input_tab.py         # build_input_tab() + sus event handlers
 │       ├── tables_tab.py        # build_tables_tab() + sus event handlers  

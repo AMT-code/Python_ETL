@@ -5,12 +5,14 @@ import time
 from reader import read_input
 from writer import write_csv, write_rpt
 from logger import Logger
+from audit import AuditLogger
 from transformers.engine import apply_transformations
 
 # 0. logger init
-# Detectar si se ejecuta desde subprocess (sin terminal interactiva)
 use_colors = sys.stdout.isatty()
 log = Logger("Pipeline", use_colors=use_colors)
+audit = AuditLogger()
+
 start_time = time.time()
 log.info("=== PIPELINE BEGINNING ===")
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,8 +22,11 @@ try:
     config_path = os.path.join(script_dir, "config.yaml")
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
+    
+    # Iniciar auditoría con la configuración
+    audit.start_audit(config)
+    
     log.success(f"Setting input file location: {config['input_file']}")
-    # Log configuración del archivo de input si existe
     if 'input_file_config' in config:
         input_config = config['input_file_config']
         log.info(f"Input file type: {input_config.get('type', 'auto')}")
@@ -34,24 +39,26 @@ try:
     log.success(f"Setting output file location: {config['output_file']}")
 except Exception as e:
     log.critical(f"Error during configuration loading: {e} --> PROCESS ENDED")
+    if audit:
+        audit.end_audit(status='failed', error_message=str(e))
     exit()
 
 # 2. input reading
 try:
     input_file = config["input_file"]
-
-    if input_file.startswith("input"):  # Ruta relativa al proyecto
+    if input_file.startswith("input"):
         input_path = os.path.join(script_dir, "..", input_file)
-    else:                               # Ruta absoluta
+    else:
         input_path = input_file
     
-    # Obtener configuración del archivo de input
     input_file_config = config.get('input_file_config', None)
     
+    audit.log_reading_start()
     df = read_input(input_path, file_config=input_file_config)
+    audit.log_reading_end(len(df), len(df.columns))
+    
     log.success(f"{len(df)} lines read")
     
-    # Log adicional sobre cómo se leyó el archivo
     if input_file_config:
         file_type = input_file_config.get('type', 'auto')
         if file_type == 'csv' and input_file_config.get('delimiter'):
@@ -62,13 +69,19 @@ try:
         log.info("File read using auto-detection")
 except Exception as e:
     log.critical(f"Error during input reading: {e} --> PROCESS ENDED ")
+    if audit:
+        audit.end_audit(status='failed', error_message=str(e))
     exit()
 
 # 3. applying transformation
 try:
-    df = apply_transformations(df, config, log, script_dir)
+    audit.log_transformations_start()
+    df = apply_transformations(df, config, log, script_dir, audit)
+    audit.log_transformations_end()
 except Exception as e:
     log.critical(f"Error during transformations: {e} --> PROCESS ENDED")
+    if audit:
+        audit.end_audit(status='failed', error_message=str(e))
     exit()
 
 # 4. printing output
@@ -76,6 +89,9 @@ try:
     output_path = "../" + config["output_file"]
     output_file = os.path.basename(output_path)
     ext = os.path.splitext(output_path)[-1].lower()
+    
+    audit.log_writing_start()
+    
     if ext == ".rpt":
         write_rpt(df, output_path)
         log.success(f"{output_file} file successfully saved")
@@ -87,11 +103,19 @@ try:
         log.warning(f"'{ext}' extension is not supported; the output file will use 'csv' format in: {warn_path}")
         df.to_csv(warn_path, index=False)
         log.success(f"{os.path.basename(warn_path)} .csv file successfully saved")
+    
+    audit.log_writing_end(len(df), len(df.columns))
+    
 except Exception as e:
     log.critical(f"Error during output saving: {e}")
+    if audit:
+        audit.end_audit(status='failed', error_message=str(e))
     exit()
 
 # 999. logger ends
-runtime = time.time() - start_time  # <-- Calcula el runtime
-log.info(f"Pipeline runtime: {runtime:.2f} seconds")  # <-- Imprime el runtime
+runtime = time.time() - start_time
+log.info(f"Pipeline runtime: {runtime:.2f} seconds")
 log.info("=== PIPELINE ENDING ===")
+
+# Finalizar auditoría
+audit.end_audit(status='success')
