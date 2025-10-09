@@ -29,6 +29,9 @@ inputs/*.xlsx
 # Outputs
 outputs/
 
+# audit_analysis
+zzz_audit_analysis/
+
 # Dependencias y cache
 *.egg-info/
 .eggs/

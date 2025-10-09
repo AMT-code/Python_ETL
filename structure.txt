@@ -1,4 +1,4 @@
-# v15/
+# v16/
 ├── env/                         # entorno virtual
 ├── inputs/                      # archivos de entrada
 │   ├── input.csv
@@ -13,16 +13,11 @@
 │   ├── reader.py                # input handler
 │   ├── writer.py                # output writer 
 │   ├── logger.py                # logger básico
-│   ├── audit.py                # logger básico
+│   ├── audit.py                 # logger básico
 │   └── transformers/
-│       ├── engine.py           # lógica principal de transformaciones
-│       └── functions.py        # funciones auxiliares reutilizables
+│       ├── engine.py            # lógica principal de transformaciones
+│       └── functions.py         # funciones auxiliares reutilizables
 ├── ui/
-│   └── app.py            		 # Streamlit interface - 100% FUNCIONAL - 
-│   └── tk_app.py            	 # Tkinter interface - STANDBY - 
-├── ui2_v8/
-│   └── main.py            		 # Flet interface - one page code for all - NO ESCALABLE
-├── ui2_v10/
 │   ├── main.py            		 # Flet interface > SPLIT IN MODULES <
 |   ├── state.py                 # StateManager class simple
 |   ├── toast.py                 # SimpleToast (no necesita carpeta utils/)
@@ -37,4 +32,4 @@
 │       ├── results_tab.py       # build_results_tab() + sus event handlers
 │       ├── sidebar.py           # build_sidebar() + update_sidebar() 
 │       └── components.py        # create_data_preview, create_config_item
-└── requirements.txt            # dependencias
+└── requirements.txt             # dependencias
