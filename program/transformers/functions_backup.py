@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
 import os
+import time
+from contextlib import contextmanager
 
-def run_business_rules(df, tables_path, logger):
+def run_business_rules(df, tables_path, logger, audit=None):
     # Guardar el prefix original
     original_prefix = logger.prefix
     # Cambiar al prefix específico del módulo
@@ -10,79 +12,71 @@ def run_business_rules(df, tables_path, logger):
 
     df = df.copy()
 
-    # --> debugger <--
-    # logger.debug(f"input data types:\n {df.info()} ")
-    # logger.debug(f"input data head lines=> {df.head(2)} ")
     logger.debug(f"input data columns -> {df.columns.tolist()} ")
 
-    # mapear sexo
-    df["Sex"] = df["Sex"].map({"Female": 0, "Male": 1})
-    df = df.rename(columns={"Sex":"SEX"})
-    logger.success("SEX mapped")
-
-    # pol_term_y
-    idx_map = pd.read_csv(os.path.join(tables_path, "temp_idx_map.csv"))
-    df = df.merge(idx_map, how="left", left_on="temp_idx", right_on="idx")
-
-    df.loc[df["tipo_producto"] == "Vitalicio", "POL_TERM_Y"] = 100
-    logger.success("POL_TERM_Y correctly assigned")
-
-    # prod type column
-    df = df.rename(columns={"tipo_producto":"PROD_TYPE"})
-    df["PROD_TYPE"] = df["PROD_TYPE"].map({"Vitalicio":1, "Temporal":2})
-    logger.success("PROD_TYPE column correctly assigned")
-
-    # date conversions
-    df["inception_date"] = pd.to_datetime(df["inception_date"], format='%d/%m/%Y')
-    df["birth_date"] = pd.to_datetime(df["birth_date"], format='%d/%m/%Y')
-
-    df["ENTRY_YEAR"] = df["inception_date"].dt.year
-    df["ENTRY_MTH"] = df["inception_date"].dt.month
-    df["AGE_AT_ENTRY"] = (df["inception_date"] - df["birth_date"]).dt.days // 365
-    logger.success("date conversions correctly done")
-
-    # sum assured
-    df["SUM_ASSURED"] = df["sum_insured"]
-    logger.success("SUM_ASSURED column correctly assigned")
-
-    # annual prem
-    df["ANNUAL_PREM"] = df["annual_prem"]
-    logger.success("ANNUAL_PREM column correctly assigned")
-
-    # tariff grp
-    tariff_map = pd.read_csv(os.path.join(tables_path, "tariff_map.csv"))
-    df = df.merge(tariff_map, on="tariff_grp", how="left")
-    logger.success("TARIFF column correctly assigned")
-
-    # currency map
-    currency_map = pd.read_csv(os.path.join(tables_path, "currency_map.csv"))
-    df = df.merge(currency_map, on="country", how="left")
-    logger.success("CURRENCY column correctly assigned")
-
-    # prem freq
-    freq_mapping = {
-    "Mensual": 12,
-    "Trimestral": 4,
-    "Semestral": 2,
-    "Anual": 1
-    }
-    df["PREM_FREQ"] = df["prem_frecuency"].map(freq_mapping)
-    logger.success("PREM_FREQ column correctly assigned")
-
-    # reins company
-    df = df.rename(columns={"reins_name":"REINS"})
+    # Helper: context manager para tracking automático
+    @contextmanager
+    def track(description):
+        """Context manager para medir tiempo de un bloque de código"""
+        start = time.time()
+        try:
+            yield
+        finally:
+            elapsed = time.time() - start
+            if audit:
+                audit.log_transformation(description, elapsed)
     
-    # comm pc
-    df = df.rename(columns={"comission_precentage":"COMM_PC"})
+    # =========================================================================
+    # COMPLEJIDAD: SIMPLE
+    # - Solo renombres y asignaciones directas
+    # - Sin merges, sin conversiones de fechas complejas
+    # - Operaciones muy rápidas
+    # =========================================================================
 
-    # -> debugger <-
-    # df["TST"] = np.where(df["SEX"] == 0, "TESTING", "TST")
-    # logger.debug(df.info())
+    # Renombrar columnas principales
+    with track("Column renaming (batch 1)"):
+        df = df.rename(columns={
+            "Sex": "SEX",
+            "tipo_producto": "PROD_TYPE",
+            "sum_insured": "SUM_ASSURED",
+            "annual_prem": "ANNUAL_PREM",
+            "reins_name": "REINS",
+            "comission_precentage": "COMM_PC"
+        })
+        logger.success("Main columns renamed")
 
-    # output variables selection
-    output_vars = ["ID", "PROD_TYPE", "SEX", "POL_TERM_Y","ENTRY_YEAR", "ENTRY_MTH", "AGE_AT_ENTRY", "TARIFF", "CURRENCY", "SUM_ASSURED", "ANNUAL_PREM","PREM_FREQ", "REINS", "COMM_PC"]
-    logger.info(f"Output variable list: {', '.join(map(str, output_vars))}")
-    df_out = df[output_vars]
+    # Mapeo simple de sexo
+    with track("SEX value mapping"):
+        df["SEX"] = df["SEX"].map({"Female": 0, "Male": 1})
+        logger.success("SEX mapped to numeric")
+
+    # Mapeo simple de producto
+    with track("PROD_TYPE value mapping"):
+        df["PROD_TYPE"] = df["PROD_TYPE"].map({"Vitalicio": 1, "Temporal": 2})
+        logger.success("PROD_TYPE mapped to numeric")
+
+    # Asignación simple de POL_TERM_Y (sin merge)
+    with track("POL_TERM_Y simple assignment"):
+        df["POL_TERM_Y"] = np.where(df["PROD_TYPE"] == 1, 100, 20)
+        logger.success("POL_TERM_Y assigned")
+
+    # Mapeo simple de frecuencia
+    with track("PREM_FREQ mapping"):
+        freq_mapping = {
+            "Mensual": 12,
+            "Trimestral": 4,
+            "Semestral": 2,
+            "Anual": 1
+        }
+        df["PREM_FREQ"] = df["prem_frecuency"].map(freq_mapping)
+        logger.success("PREM_FREQ mapped")
+
+    # Selección de columnas de output
+    with track("Output column selection"):
+        output_vars = ["ID", "PROD_TYPE", "SEX", "POL_TERM_Y", "SUM_ASSURED", 
+                        "ANNUAL_PREM", "PREM_FREQ", "REINS", "COMM_PC"]
+        logger.info(f"Output variable list: {', '.join(map(str, output_vars))}")
+        df_out = df[output_vars]
 
     # Restaurar prefix original
     logger.prefix = original_prefix

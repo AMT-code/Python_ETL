@@ -172,25 +172,31 @@ class AuditLogger:
         
         # Criterios de complejidad más realistas para cálculos actuariales
         # Consideramos tanto la cantidad de transformaciones como el tiempo promedio
-        
-        # SIMPLE: Pocas transformaciones básicas (renombres, asignaciones directas)
-        if count <= 10 and time_per_transform < 0.5:
-            return "SIMPLE"
-        
-        # MEDIUM: Transformaciones típicas con algunos joins/merges
-        # Ej: 10-25 transformaciones con tiempos razonables
-        elif count <= 25 and time_per_transform < 1.5:
-            return "MEDIUM"
-        
-        # COMPLEX: Muchas transformaciones o algunas operaciones pesadas
-        # Ej: 25-40 transformaciones, o transformaciones con joins múltiples
-        elif count <= 40 and time_per_transform < 3.0:
+
+
+        if count > 15 or time_per_transform > 1.0:
             return "COMPLEX"
-        
-        # VERY COMPLEX: Procesos muy elaborados con muchas etapas
-        # Ej: >40 transformaciones o tiempos muy altos por operación
         else:
-            return "VERY COMPLEX"
+            return "SIMPLE"
+
+        # # SIMPLE: Pocas transformaciones básicas (renombres, asignaciones directas)
+        # if count <= 10 and time_per_transform < 0.5:
+        #     return "SIMPLE"
+        
+        # # MEDIUM: Transformaciones típicas con algunos joins/merges
+        # # Ej: 10-25 transformaciones con tiempos razonables
+        # elif count <= 25 and time_per_transform < 1.5:
+        #     return "MEDIUM"
+        
+        # # COMPLEX: Muchas transformaciones o algunas operaciones pesadas
+        # # Ej: 25-40 transformaciones, o transformaciones con joins múltiples
+        # elif count <= 40 and time_per_transform < 3.0:
+        #     return "COMPLEX"
+        
+        # # VERY COMPLEX: Procesos muy elaborados con muchas etapas
+        # # Ej: >40 transformaciones o tiempos muy altos por operación
+        # else:
+        #     return "VERY_COMPLEX"
     
     def _percentage(self, part, total):
         """Calcular porcentaje"""
