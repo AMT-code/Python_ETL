@@ -20,10 +20,10 @@ BACKUP_FILE = os.path.join(TRANSFORMERS_DIR, "functions_backup.py")
 
 # Versiones de functions.py
 VERSIONS = {
-    # "SIMPLE": "functions_simple.py",
+    "SIMPLE": "functions_simple.py",
     "MEDIUM": "functions_medium.py",  # La original actual
-    # "COMPLEX": "functions_complex.py",
-    "VERY_COMPLEX": "functions_very_complex.py"
+    "COMPLEX": "functions_complex.py",
+    # "VERY_COMPLEX": "functions_very_complex.py"
 }
 
 # Archivos de input
@@ -129,10 +129,10 @@ def run_test_matrix(complexities=None, sizes=None):
     """
     # Defaults
     if complexities is None:
-        complexities = [#"SIMPLE", 
+        complexities = ["SIMPLE", 
                         "MEDIUM",
-                        #"COMPLEX",
-                        "VERY_COMPLEX"]
+                        "COMPLEX"]
+                        #"VERY_COMPLEX"]
     if sizes is None:
         sizes = ["100K", "1M", "1.5M", "2M"]
     

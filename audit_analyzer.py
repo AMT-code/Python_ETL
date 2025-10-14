@@ -49,6 +49,19 @@ def parse_audit_file(filepath):
     # Status
     data['status'] = re.search(r'Status: (\w+)', content).group(1)
     
+    # Memory metrics (nuevo - con manejo de errores por compatibilidad)
+    try:
+        data['memory_initial_mb'] = float(re.search(r'Initial: ([\d.]+) MB', content).group(1))
+        data['memory_peak_mb'] = float(re.search(r'Peak: ([\d.]+) MB', content).group(1))
+        data['memory_final_mb'] = float(re.search(r'Final: ([\d.]+) MB', content).group(1))
+        data['memory_delta_mb'] = float(re.search(r'Delta: \+([\d.]+) MB', content).group(1))
+    except (AttributeError, ValueError):
+        # Si no encuentra las métricas de memoria (audits viejos)
+        data['memory_initial_mb'] = None
+        data['memory_peak_mb'] = None
+        data['memory_final_mb'] = None
+        data['memory_delta_mb'] = None
+    
     return data
 
 
@@ -124,6 +137,34 @@ def generate_summary_report(df, output_file='zzz_audit_analysis/audit_summary_re
         
         f.write("\n\n")
         
+        # Memory analysis (solo si hay datos de memoria)
+        if df['memory_peak_mb'].notna().any():
+            f.write("MEMORY USAGE ANALYSIS\n")
+            f.write("-" * 100 + "\n")
+            
+            # Agrupar por tamaño de dataset
+            memory_by_size = df.groupby('input_rows').agg({
+                'memory_initial_mb': 'mean',
+                'memory_peak_mb': 'mean',
+                'memory_delta_mb': 'mean',
+                'output_columns': 'first'  # Para referencia
+            })
+            
+            f.write(f"{'Rows':<15} {'Initial (MB)':<15} {'Peak (MB)':<15} {'Delta (MB)':<15} {'Cols':<8}\n")
+            f.write("-" * 100 + "\n")
+            
+            for idx, row in memory_by_size.iterrows():
+                f.write(f"{idx:>14,} {row['memory_initial_mb']:>13.1f} {row['memory_peak_mb']:>13.1f} {row['memory_delta_mb']:>13.1f} {int(row['output_columns']):>6}\n")
+            
+            f.write("\n")
+            
+            # Memory efficiency (MB per 100K rows)
+            f.write("MEMORY EFFICIENCY:\n")
+            avg_mb_per_100k = (df['memory_delta_mb'] / (df['input_rows'] / 100000)).mean()
+            f.write(f"  └─ Average: {avg_mb_per_100k:.1f} MB per 100K rows\n")
+            
+            f.write("\n\n")
+        
         # Complejidad
         f.write("COMPLEXITY ANALYSIS\n")
         f.write("-" * 100 + "\n")
@@ -165,21 +206,51 @@ def generate_summary_report(df, output_file='zzz_audit_analysis/audit_summary_re
 def generate_comparison_csv(df, output_file='zzz_audit_analysis/audit_comparison.csv'):
     """Generar CSV para análisis externo (Excel)"""
     
-    # Seleccionar columnas clave
-    comparison_df = df[[
-        'timestamp', 'input_rows', 'output_rows',
+    # Seleccionar columnas clave (incluyendo memoria si existe)
+    base_columns = [
+        'timestamp', 'input_rows', 'output_rows', 'output_columns',
         'total_runtime', 'reading_time', 'transformation_time', 'writing_time',
+        'reading_pct', 'transformation_pct', 'writing_pct',
         'throughput', 'time_per_1m', 'complexity',
         'transformation_count', 'avg_time_per_transform'
-    ]].copy()
+    ]
+    
+    # Agregar columnas de memoria si existen
+    if 'memory_peak_mb' in df.columns and df['memory_peak_mb'].notna().any():
+        base_columns.extend(['memory_initial_mb', 'memory_peak_mb', 'memory_final_mb', 'memory_delta_mb'])
+    
+    comparison_df = df[base_columns].copy()
     
     # Renombrar para claridad
-    comparison_df.columns = [
-        'Timestamp', 'Input Rows', 'Output Rows',
-        'Total Runtime (s)', 'Reading (s)', 'Transformation (s)', 'Writing (s)',
-        'Throughput (rows/s)', 'Time per 1M (s)', 'Complexity',
-        'Transform Count', 'Avg Time per Transform (s)'
-    ]
+    rename_dict = {
+        'timestamp': 'Timestamp',
+        'input_rows': 'Input Rows',
+        'output_rows': 'Output Rows',
+        'output_columns': 'Output Columns',
+        'total_runtime': 'Total Runtime (s)',
+        'reading_time': 'Reading (s)',
+        'transformation_time': 'Transformation (s)',
+        'writing_time': 'Writing (s)',
+        'reading_pct': 'Reading %',
+        'transformation_pct': 'Transformation %',
+        'writing_pct': 'Writing %',
+        'throughput': 'Throughput (rows/s)',
+        'time_per_1m': 'Time per 1M (s)',
+        'complexity': 'Complexity',
+        'transformation_count': 'Transform Count',
+        'avg_time_per_transform': 'Avg Time per Transform (s)'
+    }
+    
+    # Agregar renombres de memoria si existen
+    if 'memory_peak_mb' in comparison_df.columns:
+        rename_dict.update({
+            'memory_initial_mb': 'Memory Initial (MB)',
+            'memory_peak_mb': 'Memory Peak (MB)',
+            'memory_final_mb': 'Memory Final (MB)',
+            'memory_delta_mb': 'Memory Delta (MB)'
+        })
+    
+    comparison_df = comparison_df.rename(columns=rename_dict)
     
     comparison_df.to_csv(output_file, index=False)
     print(f"✅ Comparison CSV generated: {output_file}")

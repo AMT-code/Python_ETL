@@ -32,4 +32,7 @@
 │       ├── results_tab.py       # build_results_tab() + sus event handlers
 │       ├── sidebar.py           # build_sidebar() + update_sidebar() 
 │       └── components.py        # create_data_preview, create_config_item
+├── audit_analyzer.py            # analizador de audit files en carpeta logs
+├── test_complexity_matrix.py    # ejecutador de matriz de pruebas (complejidad x bbdd)
+├── zzz_audit_analysis           # carpeta de resultados de analizador
 └── requirements.txt             # dependencias

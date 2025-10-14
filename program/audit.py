@@ -1,5 +1,6 @@
 import os
 import time
+import psutil  # Para métricas de memoria
 from datetime import datetime
 
 
@@ -11,6 +12,8 @@ class AuditLogger:
         self.log_path = None
         self.start_time = None
         self.metrics = {}
+        self.process = psutil.Process()  # Proceso actual para métricas
+        self.memory_samples = []  # Muestras de memoria durante ejecución
         
         # Asegurar que existe el directorio
         os.makedirs(log_dir, exist_ok=True)
@@ -20,6 +23,14 @@ class AuditLogger:
         self.start_time = time.time()
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.log_path = os.path.join(self.log_dir, f"{timestamp}_audit.txt")
+        
+        # Capturar memoria inicial
+        mem_info = self.process.memory_info()
+        self.memory_samples = [{
+            'phase': 'start',
+            'rss_mb': mem_info.rss / 1024 / 1024,
+            'vms_mb': mem_info.vms / 1024 / 1024
+        }]
         
         # Inicializar métricas
         self.metrics = {
@@ -36,7 +47,10 @@ class AuditLogger:
             'runtime_writing': 0,
             'transformations_count': 0,
             'transformations_complexity': 'unknown',
-            'status': 'started'
+            'status': 'started',
+            'memory_start_mb': mem_info.rss / 1024 / 1024,
+            'memory_peak_mb': mem_info.rss / 1024 / 1024,
+            'memory_end_mb': 0
         }
         
         # Escribir header del audit
@@ -62,10 +76,17 @@ class AuditLogger:
         self.metrics['input_rows'] = rows
         self.metrics['input_columns'] = columns
         
+        # Capturar memoria después de lectura
+        mem_info = self.process.memory_info()
+        mem_mb = mem_info.rss / 1024 / 1024
+        self.memory_samples.append({'phase': 'after_reading', 'rss_mb': mem_mb, 'vms_mb': mem_info.vms / 1024 / 1024})
+        self.metrics['memory_peak_mb'] = max(self.metrics['memory_peak_mb'], mem_mb)
+        
         self._write_line(f"[PHASE] INPUT READING completed")
         self._write_line(f"  ├─ Rows read: {rows:,}")
         self._write_line(f"  ├─ Columns: {columns}")
-        self._write_line(f"  └─ Time: {self.metrics['runtime_reading']:.3f}s")
+        self._write_line(f"  ├─ Time: {self.metrics['runtime_reading']:.3f}s")
+        self._write_line(f"  └─ Memory: {mem_mb:.1f} MB")
         self._write_line("")
     
     def log_transformations_start(self):
@@ -86,6 +107,12 @@ class AuditLogger:
         if 'transformations_start' in self.metrics:
             self.metrics['runtime_transformations'] = time.time() - self.metrics['transformations_start']
         
+        # Capturar memoria después de transformaciones
+        mem_info = self.process.memory_info()
+        mem_mb = mem_info.rss / 1024 / 1024
+        self.memory_samples.append({'phase': 'after_transformations', 'rss_mb': mem_mb, 'vms_mb': mem_info.vms / 1024 / 1024})
+        self.metrics['memory_peak_mb'] = max(self.metrics['memory_peak_mb'], mem_mb)
+        
         # Calcular complejidad basada en tiempo y cantidad de transformaciones
         complexity = self._calculate_complexity()
         self.metrics['transformations_complexity'] = complexity
@@ -93,7 +120,8 @@ class AuditLogger:
         self._write_line(f"[PHASE] TRANSFORMATIONS completed")
         self._write_line(f"  ├─ Total transformations: {self.metrics['transformations_count']}")
         self._write_line(f"  ├─ Complexity: {complexity}")
-        self._write_line(f"  └─ Time: {self.metrics['runtime_transformations']:.3f}s")
+        self._write_line(f"  ├─ Time: {self.metrics['runtime_transformations']:.3f}s")
+        self._write_line(f"  └─ Memory: {mem_mb:.1f} MB")
         self._write_line("")
     
     def log_writing_start(self):
@@ -108,16 +136,32 @@ class AuditLogger:
         self.metrics['output_rows'] = rows
         self.metrics['output_columns'] = columns
         
+        # Capturar memoria después de escritura
+        mem_info = self.process.memory_info()
+        mem_mb = mem_info.rss / 1024 / 1024
+        self.memory_samples.append({'phase': 'after_writing', 'rss_mb': mem_mb, 'vms_mb': mem_info.vms / 1024 / 1024})
+        self.metrics['memory_peak_mb'] = max(self.metrics['memory_peak_mb'], mem_mb)
+        
         self._write_line(f"[PHASE] OUTPUT WRITING completed")
         self._write_line(f"  ├─ Rows written: {rows:,}")
         self._write_line(f"  ├─ Columns: {columns}")
-        self._write_line(f"  └─ Time: {self.metrics['runtime_writing']:.3f}s")
+        self._write_line(f"  ├─ Time: {self.metrics['runtime_writing']:.3f}s")
+        self._write_line(f"  └─ Memory: {mem_mb:.1f} MB")
         self._write_line("")
     
     def end_audit(self, status='success', error_message=None):
         """Finalizar auditoría"""
         self.metrics['runtime_total'] = time.time() - self.start_time
         self.metrics['status'] = status
+        
+        # Capturar memoria final
+        mem_info = self.process.memory_info()
+        self.metrics['memory_end_mb'] = mem_info.rss / 1024 / 1024
+        self.memory_samples.append({
+            'phase': 'end',
+            'rss_mb': self.metrics['memory_end_mb'],
+            'vms_mb': mem_info.vms / 1024 / 1024
+        })
         
         self._write_line("=" * 80)
         self._write_line("EXECUTION SUMMARY")
@@ -133,6 +177,14 @@ class AuditLogger:
         self._write_line(f"  ├─ Reading Time: {self.metrics['runtime_reading']:.3f}s ({self._percentage(self.metrics['runtime_reading'], self.metrics['runtime_total']):.1f}%)")
         self._write_line(f"  ├─ Transformation Time: {self.metrics['runtime_transformations']:.3f}s ({self._percentage(self.metrics['runtime_transformations'], self.metrics['runtime_total']):.1f}%)")
         self._write_line(f"  └─ Writing Time: {self.metrics['runtime_writing']:.3f}s ({self._percentage(self.metrics['runtime_writing'], self.metrics['runtime_total']):.1f}%)")
+        self._write_line("")
+        
+        # Memory summary
+        self._write_line("MEMORY USAGE:")
+        self._write_line(f"  ├─ Initial: {self.metrics['memory_start_mb']:.1f} MB")
+        self._write_line(f"  ├─ Peak: {self.metrics['memory_peak_mb']:.1f} MB")
+        self._write_line(f"  ├─ Final: {self.metrics['memory_end_mb']:.1f} MB")
+        self._write_line(f"  └─ Delta: +{(self.metrics['memory_peak_mb'] - self.metrics['memory_start_mb']):.1f} MB")
         self._write_line("")
         
         # Data throughput
@@ -170,33 +222,28 @@ class AuditLogger:
         total_time = self.metrics['runtime_transformations']
         time_per_transform = total_time / max(1, count)
         
-        # Criterios de complejidad más realistas para cálculos actuariales
-        # Consideramos tanto la cantidad de transformaciones como el tiempo promedio
-
-
-        if count > 15 or time_per_transform > 1.0:
-            return "COMPLEX"
-        else:
+        # Criterios ajustados basados en datos reales del proyecto
+        # Basado en tests con 100K-2M filas
+        
+        # SIMPLE: Pocas transformaciones básicas (renombres, asignaciones directas)
+        # Ej: 6 transformaciones, ~0.01-0.12s por transform
+        if count <= 8:
             return "SIMPLE"
-
-        # # SIMPLE: Pocas transformaciones básicas (renombres, asignaciones directas)
-        # if count <= 10 and time_per_transform < 0.5:
-        #     return "SIMPLE"
         
-        # # MEDIUM: Transformaciones típicas con algunos joins/merges
-        # # Ej: 10-25 transformaciones con tiempos razonables
-        # elif count <= 25 and time_per_transform < 1.5:
-        #     return "MEDIUM"
+        # MEDIUM: Transformaciones típicas con algunos joins/merges
+        # Ej: 12-22 transformaciones con conversiones de fechas y merges
+        elif count <= 12:
+            return "MEDIUM"
         
-        # # COMPLEX: Muchas transformaciones o algunas operaciones pesadas
-        # # Ej: 25-40 transformaciones, o transformaciones con joins múltiples
-        # elif count <= 40 and time_per_transform < 3.0:
-        #     return "COMPLEX"
+        # COMPLEX: Muchas transformaciones con agregaciones y cálculos derivados
+        # Ej: 23-35 transformaciones con validaciones, window functions
+        elif count <= 35:
+            return "COMPLEX"
         
-        # # VERY COMPLEX: Procesos muy elaborados con muchas etapas
-        # # Ej: >40 transformaciones o tiempos muy altos por operación
-        # else:
-        #     return "VERY_COMPLEX"
+        # VERY COMPLEX: Procesos muy elaborados con muchas etapas
+        # Ej: >35 transformaciones con scoring, segmentación, proyecciones
+        else:
+            return "VERY COMPLEX"
     
     def _percentage(self, part, total):
         """Calcular porcentaje"""
