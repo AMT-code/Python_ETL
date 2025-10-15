@@ -227,7 +227,7 @@ class AuditLogger:
         
         # SIMPLE: Pocas transformaciones básicas (renombres, asignaciones directas)
         # Ej: 6 transformaciones, ~0.01-0.12s por transform
-        if count <= 8:
+        if count <= 6:
             return "SIMPLE"
         
         # MEDIUM: Transformaciones típicas con algunos joins/merges
@@ -237,13 +237,13 @@ class AuditLogger:
         
         # COMPLEX: Muchas transformaciones con agregaciones y cálculos derivados
         # Ej: 23-35 transformaciones con validaciones, window functions
-        elif count <= 35:
+        elif count <= 24:
             return "COMPLEX"
         
         # VERY COMPLEX: Procesos muy elaborados con muchas etapas
         # Ej: >35 transformaciones con scoring, segmentación, proyecciones
         else:
-            return "VERY COMPLEX"
+            return "VERY_COMPLEX"
     
     def _percentage(self, part, total):
         """Calcular porcentaje"""

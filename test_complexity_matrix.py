@@ -23,7 +23,7 @@ VERSIONS = {
     "SIMPLE": "functions_simple.py",
     "MEDIUM": "functions_medium.py",  # La original actual
     "COMPLEX": "functions_complex.py",
-    # "VERY_COMPLEX": "functions_very_complex.py"
+    "VERY_COMPLEX": "functions_very_complex.py"
 }
 
 # Archivos de input
@@ -131,8 +131,8 @@ def run_test_matrix(complexities=None, sizes=None):
     if complexities is None:
         complexities = ["SIMPLE", 
                         "MEDIUM",
-                        "COMPLEX"]
-                        #"VERY_COMPLEX"]
+                        "COMPLEX",
+                        "VERY_COMPLEX"]
     if sizes is None:
         sizes = ["100K", "1M", "1.5M", "2M"]
     
