@@ -1,9 +1,9 @@
-input_file: inputs/data_2000k.csv
-tables_path: tables
-output_file: outputs/res_2000k.csv
+input_file: inputs\data_100k.csv
 input_file_config:
-  type: csv
   delimiter: ','
+  type: csv
+output_file: outputs\res3.csv
 output_file_config:
-  type: .csv
   format: CSV
+  type: .csv
+tables_path: tables

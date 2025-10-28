@@ -11,7 +11,6 @@ from transformers.engine import apply_transformations
 # 0. logger init
 use_colors = sys.stdout.isatty()
 log = Logger("Pipeline", use_colors=use_colors)
-audit = AuditLogger()
 
 start_time = time.time()
 log.info("=== PIPELINE BEGINNING ===")
@@ -23,8 +22,15 @@ try:
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     
-    # Iniciar auditoría con la configuración
-    audit.start_audit(config)
+    # Verificar si audit está habilitado (después de cargar config)
+    audit_enabled = config.get('enable_audit', True)
+    audit = AuditLogger() if audit_enabled else None
+    
+    if audit_enabled:
+        log.info("Audit logging: ENABLED")
+        audit.start_audit(config)
+    else:
+        log.warning("Audit logging: DISABLED (no performance metrics will be saved)")
     
     log.success(f"Setting input file location: {config['input_file']}")
     if 'input_file_config' in config:
@@ -39,8 +45,6 @@ try:
     log.success(f"Setting output file location: {config['output_file']}")
 except Exception as e:
     log.critical(f"Error during configuration loading: {e} --> PROCESS ENDED")
-    if audit:
-        audit.end_audit(status='failed', error_message=str(e))
     exit()
 
 # 2. input reading
@@ -53,9 +57,13 @@ try:
     
     input_file_config = config.get('input_file_config', None)
     
-    audit.log_reading_start()
+    if audit:
+        audit.log_reading_start()
+    
     df = read_input(input_path, file_config=input_file_config)
-    audit.log_reading_end(len(df), len(df.columns))
+    
+    if audit:
+        audit.log_reading_end(len(df), len(df.columns))
     
     log.success(f"{len(df)} lines read")
     
@@ -75,9 +83,13 @@ except Exception as e:
 
 # 3. applying transformation
 try:
-    audit.log_transformations_start()
+    if audit:
+        audit.log_transformations_start()
+    
     df = apply_transformations(df, config, log, script_dir, audit)
-    audit.log_transformations_end()
+    
+    if audit:
+        audit.log_transformations_end()
 except Exception as e:
     log.critical(f"Error during transformations: {e} --> PROCESS ENDED")
     if audit:
@@ -90,7 +102,8 @@ try:
     output_file = os.path.basename(output_path)
     ext = os.path.splitext(output_path)[-1].lower()
     
-    audit.log_writing_start()
+    if audit:
+        audit.log_writing_start()
     
     if ext == ".rpt":
         write_rpt(df, output_path)
@@ -104,8 +117,8 @@ try:
         df.to_csv(warn_path, index=False)
         log.success(f"{os.path.basename(warn_path)} .csv file successfully saved")
     
-    audit.log_writing_end(len(df), len(df.columns))
-    
+    if audit:
+        audit.log_writing_end(len(df), len(df.columns))
 except Exception as e:
     log.critical(f"Error during output saving: {e}")
     if audit:
@@ -118,4 +131,5 @@ log.info(f"Pipeline runtime: {runtime:.2f} seconds")
 log.info("=== PIPELINE ENDING ===")
 
 # Finalizar auditoría
-audit.end_audit(status='success')
+if audit:
+    audit.end_audit(status='success')

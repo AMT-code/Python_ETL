@@ -174,7 +174,7 @@ class CodeTab:
             min_lines=20,
             max_lines=100,
             expand=True,
-            text_style=ft.TextStyle(font_family="Courier New", size=12),
+            text_style=ft.TextStyle(font_family="Courier New", size=12, color=ft.Colors.WHITE),
             border=ft.InputBorder.OUTLINE,
             border_color=ft.Colors.GREY_400,
             focused_border_color=ft.Colors.BLUE_400,
@@ -186,7 +186,8 @@ class CodeTab:
             height=500,
             border_radius=8,
             padding=5,
-            expand=True
+            expand=True,
+            bgcolor=ft.Colors.GREY_900,  # fondo oscuro
         )
         
         self.content_column.controls.extend([

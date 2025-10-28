@@ -25,6 +25,9 @@ class TablesTab:
         """Construir el contenido del tab"""
         return ft.Container(
             content=ft.Column([
+                ft.Text("Tables Configuration", size=24, weight=ft.FontWeight.BOLD),
+                ft.Divider(),
+                
                 # Tables directory path
                 ft.TextField(
                     label="Tables directory path",

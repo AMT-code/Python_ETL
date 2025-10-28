@@ -26,6 +26,9 @@ class InputTab:
         """Construir el contenido del tab"""
         return ft.Container(
             content=ft.Column([
+                ft.Text("Input File Configuration", size=24, weight=ft.FontWeight.BOLD),
+                ft.Divider(),
+                
                 # Input file path
                 ft.TextField(
                     label="Input file path",

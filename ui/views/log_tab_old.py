@@ -34,6 +34,9 @@ class LogTab:
         """Construir el contenido del tab"""
         return ft.Container(
             content=ft.Column([
+                ft.Text("Pipeline Logs", size=24, weight=ft.FontWeight.BOLD),
+                ft.Divider(),
+
                 # Selector de archivo de log y refresh button
                 ft.Row([
                     ft.Dropdown(
