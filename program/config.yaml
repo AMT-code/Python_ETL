@@ -1,9 +1,9 @@
-enable_audit: true
+enable_audit: false
 input_file: inputs\data_1000k.csv
 input_file_config:
   delimiter: ','
   type: csv
-output_file: outputs\res88.csv
+output_file: outputs\res.csv
 output_file_config:
   format: CSV
   type: .csv
