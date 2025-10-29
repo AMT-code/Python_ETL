@@ -24,6 +24,11 @@
 |   ├── loading_overlay.py       # Spinner de carga y bloqueo de intergaz, proceso Async, logs en tiempo real
 |   ├── core
 │   |   └── pipeline_runner.py   # run_pipeline()
+│   ├── components/
+│   │     ├─ corporate_colors.py      → Paleta centralizada
+│   │     ├─ corporate_titlebar.py    → Solo barra título
+│   │     ├─ corporate_statusbar.py   → Solo barra estado
+│   │     └─ corporate_sidebar.py     → Solo navegación
 |   └── views/
 │       ├── input_tab.py         # build_input_tab() + sus event handlers
 │       ├── tables_tab.py        # build_tables_tab() + sus event handlers  

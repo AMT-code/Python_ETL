@@ -207,7 +207,38 @@ class ETLPipelineApp:
         self.page.update()
     
     def create_view_header(self, title, subtitle):
-        """Crear header de vista"""
+        """Crear header de vista con botones condicionales"""
+        # Definir qué tabs tienen botones de Save y Refresh
+        has_save = self.current_view in ['input', 'tables', 'output']
+        has_refresh = self.current_view in ['input', 'tables', 'output']
+        
+        # Construir row de botones
+        action_buttons = []
+        
+        if has_save:
+            action_buttons.append(
+                ft.ElevatedButton(
+                    "Save",
+                    icon=ft.Icons.SAVE,
+                    style=ft.ButtonStyle(
+                        bgcolor=CorporateColors.PRIMARY,
+                        color=ft.Colors.WHITE,
+                        shape=ft.RoundedRectangleBorder(radius=6)
+                    ),
+                    on_click=lambda e: self.save_current_view()
+                )
+            )
+        
+        if has_refresh:
+            action_buttons.append(
+                ft.IconButton(
+                    icon=ft.Icons.REFRESH,
+                    icon_color=CorporateColors.SECONDARY,
+                    tooltip="Refresh",
+                    on_click=lambda e: self.refresh_current_view()
+                )
+            )
+        
         return ft.Container(
             content=ft.Column([
                 ft.Row([
@@ -218,13 +249,8 @@ class ETLPipelineApp:
                         color=CorporateColors.TEXT_PRIMARY
                     ),
                     ft.Container(expand=True),
-                    ft.IconButton(
-                        icon=ft.Icons.REFRESH,
-                        icon_color=CorporateColors.SECONDARY,
-                        tooltip="Refresh",
-                        on_click=lambda e: self.refresh_current_view()
-                    )
-                ]),
+                    *action_buttons  # Agregar botones condicionalmente
+                ], spacing=10),
                 ft.Text(
                     subtitle,
                     size=13,
@@ -238,6 +264,29 @@ class ETLPipelineApp:
     def refresh_current_view(self):
         """Refrescar vista actual"""
         self.load_view(self.current_view)
+    
+    def save_current_view(self):
+        """Guardar/aplicar configuración del tab actual"""
+        if self.current_view == 'input':
+            # Re-validar input
+            if hasattr(self.tabs['input'], 'validate_input'):
+                self.tabs['input'].validate_input(None)
+                self.toast.success("✅ Input configuration saved")
+        
+        elif self.current_view == 'tables':
+            # Re-validar tables
+            if hasattr(self.tabs['tables'], 'validate_tables'):
+                self.tabs['tables'].validate_tables(None)
+                self.toast.success("✅ Tables configuration saved")
+        
+        elif self.current_view == 'output':
+            # Re-validar output
+            if hasattr(self.tabs['output'], 'validate_output'):
+                self.tabs['output'].validate_output(None)
+                self.toast.success("✅ Output configuration saved")
+        
+        # Actualizar status después de guardar
+        self.update_status()
     
     def update_status(self):
         """Actualizar status bar y botón Run Pipeline"""

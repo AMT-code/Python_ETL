@@ -30,7 +30,7 @@ try:
         log.info("Audit logging: ENABLED")
         audit.start_audit(config)
     else:
-        log.warning("Audit logging: DISABLED (no performance metrics will be saved)")
+        log.info("Audit logging: DISABLED (no performance metrics will be saved)")
     
     log.success(f"Setting input file location: {config['input_file']}")
     if 'input_file_config' in config:

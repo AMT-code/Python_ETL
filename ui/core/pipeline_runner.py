@@ -66,7 +66,8 @@ def run_pipeline(self):
         "output_file_config": {
             "type": output_config.get("file_type"),
             "format": output_config.get("file_type").replace(".", "").upper()
-        }
+        },
+        "enable_audit": self.state.get('enable_audit', True)
     }
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
